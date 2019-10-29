@@ -1,0 +1,13 @@
+ActualTag:
+  required: "必须存在，而且不能为空"
+  min: "长度太短"
+  max: "长度太长"
+  email: "请填写正确的邮箱格式"
+  eqfield: "确认密码与密码不一致"
+Field:
+  UserName: "用户名"
+  Password: "密码"
+  ConfirmPassword: "密码"
+  Email: "邮箱"
+  Sex: "性别"
+

@@ -199,7 +199,6 @@ func HandleGetAvatarNoFileName(c *gin.Context) {
 	if u, ok := user.(*model.User); ok {
 
 		filepath := avatarPath + u.Avatar
-		fmt.Println(filepath)
 		file, _ := os.Open(filepath)
 		content, _ := ioutil.ReadAll(file)
 		c.Data(200, contentType, content)

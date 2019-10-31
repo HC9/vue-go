@@ -147,7 +147,7 @@ func (user *User) AdminUpdatePassword(password string) *service.Response {
 
 // 修改用户头像
 func (user *User) HandleUpdateAvatar(avatarName *string) {
-	if strings.HasPrefix(user.Avatar, strconv.Itoa(user.Id)) {
+	if !strings.HasPrefix(user.Avatar, strconv.Itoa(user.Id)) {
 		DB.Model(user).Update("avatar", *avatarName)
 		user.Avatar = *avatarName
 	}

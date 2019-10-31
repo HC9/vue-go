@@ -17,7 +17,7 @@ import (
 
 // 用户注册与登录
 // 注册
-func UserRegister(c *gin.Context) {
+func HandleUserRegister(c *gin.Context) {
 	registerUser := service.UserRegisterService{}
 	// BindJSON 处理 post json 的请求
 	// 验证用户字段是否合法，合法则发送验证邮件
@@ -45,7 +45,7 @@ func UserRegister(c *gin.Context) {
 }
 
 // 用户登录
-func UserLogin(c *gin.Context) {
+func HandleUserLogin(c *gin.Context) {
 	loginUser := service.UserLoginService{}
 	if err := c.ShouldBindJSON(&loginUser); err != nil {
 		c.JSON(200, gin.H{
@@ -67,7 +67,7 @@ func UserLogin(c *gin.Context) {
 }
 
 // 用户验证完成，将信息插入数据库
-func UserInsert(c *gin.Context) {
+func HandleUserInsert(c *gin.Context) {
 	key := c.Param("key")
 	registerJs, _ := cache.RedisClient.Get(key).Result()
 	registerUser := service.UserRegisterService{}
@@ -93,7 +93,7 @@ func UserInsert(c *gin.Context) {
 }
 
 // 用户退出登录状态
-func UserLogout(c *gin.Context) {
+func HandleUserLogout(c *gin.Context) {
 	s := sessions.Default(c)
 	userID := s.Get("user_id")
 	if uid, ok := userID.(int); ok {
@@ -110,7 +110,7 @@ func UserLogout(c *gin.Context) {
 }
 
 // 获取此用户的详细信息
-func GetUserInfo(c *gin.Context) {
+func HandleGetUserInfo(c *gin.Context) {
 	userResp := service.UserResponse{}
 	user, _ := c.Get("user")
 	if u, ok := user.(*model.User); ok {
@@ -129,7 +129,8 @@ func GetUserInfo(c *gin.Context) {
 	}
 }
 
-func AdminChangePassword(c *gin.Context) {
+// 用户在登录状态下修改密码
+func HandleLoginStatusChangePassword(c *gin.Context) {
 	type Form struct {
 		Password string `json:"password"`
 	}

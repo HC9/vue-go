@@ -8,7 +8,7 @@ import (
 )
 
 // 创建微博
-func CreateBBS(c *gin.Context) {
+func HandleCreateBBS(c *gin.Context) {
 	user, _ := c.Get("user")
 	if u, ok := user.(*model.User); ok {
 		bbs := model.BBS{}
@@ -21,7 +21,7 @@ func CreateBBS(c *gin.Context) {
 }
 
 // 添加评论
-func AddComment(c *gin.Context) {
+func HandleAddComment(c *gin.Context) {
 	user, _ := c.Get("user")
 	if u, ok := user.(*model.User); ok {
 		postComment := &model.PostComment{}
@@ -36,7 +36,7 @@ func AddComment(c *gin.Context) {
 }
 
 // 删除微博
-func DeleteBBS(c *gin.Context) {
+func HandleDeleteBBS(c *gin.Context) {
 	user, _ := c.Get("user")
 	if u, ok := user.(*model.User); ok {
 		w := &model.BBS{}
@@ -63,7 +63,7 @@ func DeleteBBS(c *gin.Context) {
 }
 
 // 微博详情
-func HandleBBSInfo(c *gin.Context) {
+func HandleGetBBSInfo(c *gin.Context) {
 	id := c.Param("id")
 	w := &model.BBS{}
 	resp := w.GetBBSInfo(id)
@@ -71,7 +71,7 @@ func HandleBBSInfo(c *gin.Context) {
 }
 
 // 列表
-func HandleBBSList(c *gin.Context) {
+func HandleGetBBSList(c *gin.Context) {
 	start := c.DefaultQuery("start", "0")
 	limit := c.DefaultQuery("limit", "10")
 	resp := model.GetBBSList(start, limit)

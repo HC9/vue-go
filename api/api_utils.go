@@ -13,7 +13,7 @@ import (
 )
 
 // 获取验证码，有效期为 5 分钟
-func GetCode(c *gin.Context) {
+func HandleGetEmaiCode(c *gin.Context) {
 	email := c.Query("email")
 	resp := cache.SendCode(email)
 	c.JSON(200, resp)
@@ -66,7 +66,7 @@ func HandleForgetPassword(c *gin.Context) {
 }
 
 // 图片API
-func HandleGetImage(c *gin.Context) {
+func HandleGetArticleImage(c *gin.Context) {
 	filename := c.Param("filename")
 	path := os.Getenv("IMAGE_PATH")
 

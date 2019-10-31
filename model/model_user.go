@@ -24,7 +24,7 @@ type User struct {
 	CreateTime time.Time
 	LoginTime  time.Time
 	Status     string `gorm:"DEFAULT:'active';size:10"` // 账号状态  active 生效 inactive 未生效 suspend 封号状态
-	Avatar     string `gorm:"DEFAULT:'atvatar.jpg';size:12"`
+	Avatar     string `gorm:"DEFAULT:'avatar.jpg';size:12"`
 }
 
 // 查询用户名和邮箱是否已被注册

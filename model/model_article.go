@@ -27,6 +27,7 @@ func (article *Article) Create(user *User) *service.Response {
 	article.UID = user.Id
 	article.Username = user.Username
 	article.CreateTime = time.Now()
+	article.Status = "active"
 
 	switch user.Role {
 	case 0:
@@ -115,8 +116,8 @@ func GetArticleIndex() *indexArticleResponse {
 	resp := &indexArticleResponse{}
 
 	NewsCount, EmployCount := 0, 0
-	DB.Limit(8).Table("articles").Order("create_time asc").Where("status='active' and subject='news'").Count(&NewsCount)
-	DB.Limit(8).Table("articles").Order("create_time asc").Where("status='active' and subject='employ'").Count(&EmployCount)
+	DB.Limit(8).Table("articles").Order("create_time desc").Where("status='active' and subject='news'").Count(&NewsCount)
+	DB.Limit(8).Table("articles").Order("create_time desc").Where("status='active' and subject='employ'").Count(&EmployCount)
 
 	resp.News = make([]Article, NewsCount)
 	resp.Employ = make([]Article, EmployCount)
@@ -131,7 +132,7 @@ func GetArticleIndex() *indexArticleResponse {
 // 获取最新的新闻列表
 func GetArticleNews() *listArticleResponse {
 	resp := listArticleResponse{}
-	DB.Limit(6).Table("articles").Where("status='active'").Order("create_time asc").Scan(&resp.Item)
+	DB.Limit(6).Table("articles").Where("status='active'").Order("create_time desc").Scan(&resp.Item)
 	resp.Code = 20000
 	return &resp
 }
@@ -156,7 +157,7 @@ func AdminArticleList(user *User, subject, start, limit string) *listArticleResp
 	startInt, _ := strconv.Atoi(start)
 	limitInt, _ := strconv.Atoi(limit)
 	resp := listArticleResponse{}
-	queryDB := DB.Table("articles").Limit(limitInt).Offset(startInt).Order("create_time asc").Where("status='active'")
+	queryDB := DB.Table("articles").Limit(limitInt).Offset(startInt).Order("create_time desc").Where("status='active'")
 
 	// 管理员有权对所有文章进行修改
 	// 普通用户仅可对本人的文章进行修改

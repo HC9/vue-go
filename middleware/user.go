@@ -26,7 +26,6 @@ func AuthRequired() gin.HandlerFunc {
 		if user, _ := c.Get("user"); user != nil {
 			// 断言，判断其是否是 model 数据类型
 			if _, ok := user.(*model.User); ok {
-				//fmt.Println(user)
 				c.Next()
 				return
 			}

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -21,9 +20,7 @@ func HandleUserRegister(c *gin.Context) {
 	registerUser := service.UserRegisterService{}
 	// BindJSON 处理 post json 的请求
 	// 验证用户字段是否合法，合法则发送验证邮件
-	fmt.Println("有没有进来")
 	if err := c.ShouldBindJSON(&registerUser); err != nil {
-		fmt.Println(err)
 		resp := service.ValidateTrans(err)
 		c.JSON(200, resp)
 	} else {

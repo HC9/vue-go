@@ -28,30 +28,17 @@ const port = 465
 
 var password = os.Getenv("EMAILPASSWORD")
 
-func SendMail(register *service.UserRegisterService) *service.Response {
-	auth := smtp.PlainAuth("", from, password, hostname)
-	to := []string{register.Email}
-	headers := make(map[string]string)
+func SendRegisterMail(register *service.UserRegisterService) *service.Response {
 
-	headers["From"] = "YuGo" + "<" + from + ">"
-	headers["To"] = to[0]
-	headers["content-Type"] = "text/html; charset=UTF-8"
-	headers["Subject"] = "VGo验证邮件"
+	subject := "VGo验证邮件"
 
 	// 内容体
 	md5Password := md5.Sum([]byte(register.Password))
 	hashPassword := hex.EncodeToString(md5Password[:])
 	url := os.Getenv("CHECK_URL") + hashPassword
 	body := `<h1>请复制并访问以下网址完成注册验证！</h1><a>` + url + `</a>`
-	msg := ""
 
-	for k, v := range headers {
-		msg += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	msg += "\r\n" + body
-
-	err := sendMailUsingTLS(fmt.Sprintf("%s:%d", hostname, port),
-		auth, from, to, []byte(msg))
+	err := sendEmail(register.Email, subject, body)
 
 	if err != nil {
 		return &service.Response{
@@ -68,6 +55,28 @@ func SendMail(register *service.UserRegisterService) *service.Response {
 	}
 }
 
+// 发送验证码给邮箱
+func SendCode(email string) *service.Response {
+	subject := "VGo验证邮件"
+	// 内容体
+	code := fmt.Sprintf("%06v", rand.New(rand.NewSource(time.Now().UnixNano())).Int31n(1000000))
+	body := `<h1>验证码` + code + `</h1><a>`
+
+	err := sendEmail(email, subject, body)
+	if err != nil {
+		return &service.Response{
+			Error: err.Error(),
+			Code:  53002,
+			Msg:   "发送验证码邮件失败",
+		}
+	} else {
+		// 发送验证邮件成功
+		// 将邮箱进行缓存, 5分钟后过时
+		RedisClient.Set(code, email, 300*time.Second)
+		return &service.Response{Code: 20000, Msg: "发送验证码邮件成功！"}
+	}
+}
+
 //return a smtp client
 func dial(addr string) (*smtp.Client, error) {
 	conn, err := tls.Dial("tcp", addr, nil)
@@ -80,7 +89,7 @@ func dial(addr string) (*smtp.Client, error) {
 	return smtp.NewClient(conn, host)
 }
 
-//参考net/smtp的func SendMail()
+//参考net/smtp的func SendRegisterMail()
 //使用net.Dial连接tls(ssl)端口时,smtp.NewClient()会卡住且不提示err
 //len(to)>1时,to[1]开始提示是密送
 func sendMailUsingTLS(addr string, auth smtp.Auth, from string,
@@ -123,40 +132,24 @@ func sendMailUsingTLS(addr string, auth smtp.Auth, from string,
 	return c.Quit()
 }
 
-// 发送验证码给邮箱
-func SendCode(email string) *service.Response {
+// 发送邮件
+func sendEmail(toEmail, subject, body string) (err error) {
 	auth := smtp.PlainAuth("", from, password, hostname)
-	to := []string{email}
-	headers := make(map[string]string)
+	to := []string{toEmail}
 
+	headers := make(map[string]string)
 	headers["From"] = "YuGo" + "<" + from + ">"
 	headers["To"] = to[0]
 	headers["content-Type"] = "text/html; charset=UTF-8"
-	headers["Subject"] = "VGo验证邮件"
+	headers["Subject"] = subject
 
-	// 内容体
-	code := fmt.Sprintf("%06v", rand.New(rand.NewSource(time.Now().UnixNano())).Int31n(1000000))
-	body := `<h1>验证码` + code + `</h1><a>`
 	msg := ""
-
 	for k, v := range headers {
 		msg += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	msg += "\r\n" + body
 
-	err := sendMailUsingTLS(fmt.Sprintf("%s:%d", hostname, port),
+	err = sendMailUsingTLS(fmt.Sprintf("%s:%d", hostname, port),
 		auth, from, to, []byte(msg))
-
-	if err != nil {
-		return &service.Response{
-			Error: err.Error(),
-			Code:  53002,
-			Msg:   "发送验证码邮件失败",
-		}
-	} else {
-		// 发送验证邮件成功
-		// 将邮箱进行缓存, 5分钟后过时
-		RedisClient.Set(code, email, 300*time.Second)
-		return &service.Response{Code: 20000, Msg: "发送验证码邮件成功！"}
-	}
+	return err
 }

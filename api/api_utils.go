@@ -87,3 +87,10 @@ func HandleGetArticleImage(c *gin.Context) {
 	}
 
 }
+
+// 获取用户
+func getUser(c *gin.Context) *model.User {
+	contextUser, _ := c.Get("user")
+	user, _ := contextUser.(*model.User)
+	return user
+}

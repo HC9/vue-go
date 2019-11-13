@@ -18,9 +18,11 @@ func NewRouter() *gin.Engine {
 	v1 := engine.Group("/api/v1")
 	{
 		v1.GET("ping", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"message": "pong",
-			})
+			go func() {
+				c.JSON(200, gin.H{
+					"message": "pong",
+				})
+			}()
 		})
 
 		// 获取验证码

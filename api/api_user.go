@@ -35,7 +35,7 @@ func HandleUserRegister(c *gin.Context) {
 		} else {
 
 			// 发送验证邮件，5分钟过时
-			mailResp := cache.SendMail(&registerUser)
+			mailResp := cache.SendRegisterMail(&registerUser)
 			c.JSON(200, mailResp)
 		}
 	}
@@ -108,22 +108,22 @@ func HandleUserLogout(c *gin.Context) {
 
 // 获取此用户的详细信息
 func HandleGetUserInfo(c *gin.Context) {
+	user := getUser(c)
+
 	userResp := service.UserResponse{}
-	user, _ := c.Get("user")
-	if u, ok := user.(*model.User); ok {
-		userResp.Username = u.Username
-		userResp.Status = u.Status
-		userResp.Email = u.Email
-		userResp.CreateTime = u.CreateTime.Format("2006年1月2号 15:04:05")
-		userResp.LoginTime = u.LoginTime.Format("2006年1月2号 15:04:05")
-		resp := &service.Response{
-			Code:  20000,
-			Data:  userResp,
-			Msg:   "成功获取信息",
-			Error: "",
-		}
-		c.JSON(200, resp)
+	userResp.Username = user.Username
+	userResp.Status = user.Status
+	userResp.Email = user.Email
+	userResp.CreateTime = user.CreateTime.Format("2006年1月2号 15:04:05")
+	userResp.LoginTime = user.LoginTime.Format("2006年1月2号 15:04:05")
+	resp := &service.Response{
+		Code:  20000,
+		Data:  userResp,
+		Msg:   "成功获取信息",
+		Error: "",
 	}
+	c.JSON(200, resp)
+
 }
 
 // 用户在登录状态下修改密码
@@ -134,11 +134,9 @@ func HandleLoginStatusChangePassword(c *gin.Context) {
 	form := Form{}
 	_ = c.BindJSON(&form)
 
-	u, _ := c.Get("user")
 	resp := &service.Response{}
-	if user, ok := u.(*model.User); ok {
-		resp = user.AdminUpdatePassword(form.Password)
-	}
+	user := getUser(c)
+	resp = user.AdminUpdatePassword(form.Password)
 	c.JSON(200, resp)
 }
 
@@ -146,24 +144,22 @@ func HandleLoginStatusChangePassword(c *gin.Context) {
 func HandleUploadAvatar(c *gin.Context) {
 	basePath := os.Getenv("AVATAR_PATH")
 	file, _ := c.FormFile("file")
-	user, _ := c.Get("user")
 
-	if u, ok := user.(*model.User); ok {
-		avatarName := strconv.Itoa(u.Id) + ".jpg"
-		filepath := basePath + avatarName
-		e := c.SaveUploadedFile(file, filepath)
+	user := getUser(c)
+	avatarName := strconv.Itoa(user.Id) + ".jpg"
+	filepath := basePath + avatarName
+	e := c.SaveUploadedFile(file, filepath)
 
-		// 头像 URL 链接
-		// /api/v1/user/avatar
-		avatarURL := "/api/v1/user/avatar/" + avatarName
+	// 头像 URL 链接
+	// /api/v1/user/avatar
+	avatarURL := "/api/v1/user/avatar/" + avatarName
 
-		if e != nil {
-			c.String(200, e.Error())
-		} else {
-			u.HandleUpdateAvatar(&avatarName)
-			model.UpdateUserCache(u)
-			c.String(200, avatarURL)
-		}
+	if e != nil {
+		c.String(200, e.Error())
+	} else {
+		user.HandleUpdateAvatar(&avatarName)
+		model.UpdateUserCache(user)
+		c.String(200, avatarURL)
 	}
 }
 
@@ -191,13 +187,11 @@ func HandleGetAvatarNoFileName(c *gin.Context) {
 	avatarPath := os.Getenv("AVATAR_PATH")
 	// 返回类型
 	contentType := "image/jpeg"
-	user, _ := c.Get("user")
 
-	if u, ok := user.(*model.User); ok {
+	user := getUser(c)
 
-		filepath := avatarPath + u.Avatar
-		file, _ := os.Open(filepath)
-		content, _ := ioutil.ReadAll(file)
-		c.Data(200, contentType, content)
-	}
+	filepath := avatarPath + user.Avatar
+	file, _ := os.Open(filepath)
+	content, _ := ioutil.ReadAll(file)
+	c.Data(200, contentType, content)
 }

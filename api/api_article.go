@@ -9,24 +9,21 @@ import (
 
 // 创建文章
 func HandleCreateArticle(c *gin.Context) {
-	cuser, _ := c.Get("user")
-	if user, ok := cuser.(*model.User); ok {
-		article := model.Article{}
-		_ = c.ShouldBindJSON(&article)
-		resp := article.Create(user)
-		c.JSON(200, resp)
-	}
+	user := getUser(c)
+	article := model.Article{}
+	_ = c.ShouldBindJSON(&article)
+	resp := article.Create(user)
+	c.JSON(200, resp)
 }
 
 // 删除文章
 func HandleDeleteArticle(c *gin.Context) {
-	cuser, _ := c.Get("user")
 	resp := &service.Response{}
-	if user, ok := cuser.(*model.User); ok {
-		article := model.Article{}
-		_ = c.ShouldBindJSON(&article)
-		resp = article.Delete(user)
-	}
+
+	user := getUser(c)
+	article := model.Article{}
+	_ = c.ShouldBindJSON(&article)
+	resp = article.Delete(user)
 	c.JSON(200, resp)
 }
 
@@ -63,15 +60,15 @@ func HandleGetArticleList(c *gin.Context) {
 // 返回属于管用户的所有文章
 // 管理员返回全部文章
 func HandleGetAdminArticleList(c *gin.Context) {
-	user, _ := c.Get("user")
-	if u, ok := user.(*model.User); ok {
-		subject := c.DefaultQuery("subject", "")
-		start := c.DefaultQuery("start", "0")
-		limit := c.DefaultQuery("limit", "10")
+	user := getUser(c)
 
-		resp := model.AdminArticleList(u, subject, start, limit)
-		c.JSON(200, resp)
-	}
+	subject := c.DefaultQuery("subject", "")
+	start := c.DefaultQuery("start", "0")
+	limit := c.DefaultQuery("limit", "10")
+
+	resp := model.AdminArticleList(user, subject, start, limit)
+	c.JSON(200, resp)
+
 }
 
 // 更新文章内容
@@ -82,11 +79,10 @@ func HandleUpdateArticle(c *gin.Context) {
 		Content string `json:"content"`
 	}
 
-	user, _ := c.Get("user")
-	if u, ok := user.(*model.User); ok {
-		updateInfo := Info{}
-		_ = c.BindJSON(&updateInfo)
-		resp := model.UpdateArticle(u, updateInfo.ID, updateInfo.Title, updateInfo.Content)
-		c.JSON(200, resp)
-	}
+	user := getUser(c)
+	updateInfo := Info{}
+	_ = c.BindJSON(&updateInfo)
+	resp := model.UpdateArticle(user, updateInfo.ID, updateInfo.Title, updateInfo.Content)
+	c.JSON(200, resp)
+
 }

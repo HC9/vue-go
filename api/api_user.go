@@ -1,13 +1,13 @@
 package api
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"vgo/cache"
 	"vgo/model"
 	"vgo/service"
+	"vgo/utils"
 
 	"github.com/gin-contrib/sessions"
 
@@ -35,7 +35,7 @@ func HandleUserRegister(c *gin.Context) {
 		} else {
 
 			// 发送验证邮件，5分钟过时
-			mailResp := cache.SendRegisterMail(&registerUser)
+			mailResp := utils.SendRegisterEmail(&registerUser)
 			c.JSON(200, mailResp)
 		}
 	}
@@ -66,9 +66,7 @@ func HandleUserLogin(c *gin.Context) {
 // 用户验证完成，将信息插入数据库
 func HandleUserInsert(c *gin.Context) {
 	key := c.Param("key")
-	registerJs, _ := cache.RedisClient.Get(key).Result()
-	registerUser := service.UserRegisterService{}
-	_ = json.Unmarshal([]byte(registerJs), &registerUser)
+	registerUser := cache.GetRegisterUserFromRedis(key)
 	if registerUser.UserName == "" {
 		c.JSON(200, service.Response{
 			Code:  54001,
@@ -78,8 +76,8 @@ func HandleUserInsert(c *gin.Context) {
 		})
 	} else {
 		user := model.User{}
-		user.Create(&registerUser)
-		cache.RedisClient.Del(key)
+		user.Create(registerUser)
+		cache.DelCache(key)
 		c.JSON(200, service.Response{
 			Code:  20000,
 			Data:  nil,
@@ -95,7 +93,7 @@ func HandleUserLogout(c *gin.Context) {
 	userID := s.Get("user_id")
 	if uid, ok := userID.(int); ok {
 		// 清空缓存
-		cache.RedisClient.Del(strconv.Itoa(uid))
+		cache.DelCache(strconv.Itoa(uid))
 		s.Delete(uid)
 		s.Clear()
 		_ = s.Save()
@@ -158,7 +156,7 @@ func HandleUploadAvatar(c *gin.Context) {
 		c.String(200, e.Error())
 	} else {
 		user.HandleUpdateAvatar(&avatarName)
-		model.UpdateUserCache(user)
+		cache.UpdateUserCache(user)
 		c.String(200, avatarURL)
 	}
 }

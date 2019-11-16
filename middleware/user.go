@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"strconv"
+	"vgo/cache"
 	"vgo/model"
 
 	"github.com/gin-contrib/sessions"
@@ -13,8 +14,8 @@ func CurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		s := sessions.Default(c)
 		if id := s.Get("user_id"); id != nil {
-			convertId := strconv.Itoa(id.(int))
-			user := model.GetOneUser(convertId)
+			userID := strconv.Itoa(id.(int))
+			user := cache.GetUserFromRedis(userID)
 			c.Set("user", user)
 			c.Next()
 		}

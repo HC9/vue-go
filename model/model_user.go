@@ -1,12 +1,10 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-	"vgo/cache"
 	"vgo/service"
 
 	"golang.org/x/crypto/bcrypt"
@@ -103,34 +101,6 @@ func (user *User) CheckPassword(password string) error {
 	// password 为登录密码
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err
-}
-
-// 获取一个用户信息
-// 单个用户完整信息不存储在 session 中，故如果用户需要频繁使用该信息，则需要做缓存处理
-// 缓存有效时间为1个小时，查询会先经过缓存，然后再向 Mysql 中查找
-func GetOneUser(ID string) *User {
-	userStr, _ := cache.RedisClient.Get(ID).Result()
-
-	user := &User{}
-	if userStr == "" {
-		// 查询  mysql
-		r, _ := strconv.Atoi(ID)
-		user.Id = r
-		DB.First(user)
-		// 存储数据到 cache
-		usJs, _ := json.Marshal(user)
-		cache.RedisClient.Set(ID, usJs, 3600*time.Second)
-	} else {
-		_ = json.Unmarshal([]byte(userStr), user)
-	}
-	return user
-}
-
-// 更新缓存信息
-func UpdateUserCache(user *User) {
-	usJs, _ := json.Marshal(user)
-	ID := strconv.Itoa(user.Id)
-	cache.RedisClient.Set(ID, usJs, 3600*time.Second)
 }
 
 // 登录用户修改密码

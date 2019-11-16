@@ -8,6 +8,7 @@ import (
 	"vgo/cache"
 	"vgo/model"
 	"vgo/service"
+	"vgo/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ import (
 // 获取验证码，有效期为 5 分钟
 func HandleGetEmaiCode(c *gin.Context) {
 	email := c.Query("email")
-	resp := cache.SendCode(email)
+	resp := utils.SendCodeEmail(email)
 	c.JSON(200, resp)
 }
 
@@ -39,7 +40,7 @@ func HandleForgetPassword(c *gin.Context) {
 	_ = c.BindJSON(&form)
 
 	resp := &service.Response{}
-	cacheEmail, _ := cache.RedisClient.Get(form.Code).Result()
+	cacheEmail := cache.Get(form.Code)
 
 	if cacheEmail == "" {
 		resp.Code = 53004

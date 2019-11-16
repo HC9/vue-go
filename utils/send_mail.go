@@ -1,10 +1,9 @@
-package cache
+package utils
 
 import (
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -12,6 +11,7 @@ import (
 	"net/smtp"
 	"os"
 	"time"
+	"vgo/cache"
 	"vgo/service"
 )
 
@@ -28,7 +28,8 @@ const port = 465
 
 var password = os.Getenv("EMAILPASSWORD")
 
-func SendRegisterMail(register *service.UserRegisterService) *service.Response {
+// 发送注册邮件
+func SendRegisterEmail(register *service.UserRegisterService) *service.Response {
 
 	subject := "VGo验证邮件"
 
@@ -49,14 +50,13 @@ func SendRegisterMail(register *service.UserRegisterService) *service.Response {
 	} else {
 		// 发送验证邮件成功
 		// 将注册数据先进行缓存, 5分钟后过时
-		reJs, _ := json.Marshal(&register)
-		RedisClient.Set(hashPassword, reJs, 300*time.Second)
+		cache.SetStruct(register, hashPassword, 300*time.Second)
 		return &service.Response{Code: 20000, Msg: "发送注册邮件成功"}
 	}
 }
 
 // 发送验证码给邮箱
-func SendCode(email string) *service.Response {
+func SendCodeEmail(email string) *service.Response {
 	subject := "VGo验证邮件"
 	// 内容体
 	code := fmt.Sprintf("%06v", rand.New(rand.NewSource(time.Now().UnixNano())).Int31n(1000000))
@@ -72,7 +72,7 @@ func SendCode(email string) *service.Response {
 	} else {
 		// 发送验证邮件成功
 		// 将邮箱进行缓存, 5分钟后过时
-		RedisClient.Set(code, email, 300*time.Second)
+		cache.Set(code, email, 300*time.Second)
 		return &service.Response{Code: 20000, Msg: "发送验证码邮件成功！"}
 	}
 }
@@ -89,7 +89,7 @@ func dial(addr string) (*smtp.Client, error) {
 	return smtp.NewClient(conn, host)
 }
 
-//参考net/smtp的func SendRegisterMail()
+//参考net/smtp的func SendRegisterEmail()
 //使用net.Dial连接tls(ssl)端口时,smtp.NewClient()会卡住且不提示err
 //len(to)>1时,to[1]开始提示是密送
 func sendMailUsingTLS(addr string, auth smtp.Auth, from string,

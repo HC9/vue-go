@@ -48,6 +48,7 @@ func HandleUserLogin(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "请填写必要的字段",
 		})
+
 	} else {
 		user := model.User{}
 		resp := user.LoginCheck(&loginUser)

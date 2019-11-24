@@ -10,7 +10,7 @@ func Cors() gin.HandlerFunc {
 	config := cors.DefaultConfig()
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Cookie"}
-	config.AllowOrigins = []string{"http://localhost:8080", "https://www.strongyu.top", "http://localhost:9528", "http://www.strongyu.top"}
+	config.AllowOrigins = []string{}
 	config.AllowCredentials = true
 	return cors.New(config)
 }

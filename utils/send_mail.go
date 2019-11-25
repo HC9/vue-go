@@ -59,7 +59,11 @@ func SendRegisterEmail(register *service.UserRegisterService) *service.Response 
 func SendCodeEmail(email string) *service.Response {
 	subject := "VGo验证邮件"
 	// 内容体
-	code := fmt.Sprintf("%06v", rand.New(rand.NewSource(time.Now().UnixNano())).Int31n(1000000))
+	//TODO 将验证码改为5分钟内同一邮箱只有一个验证码
+	code := cache.Get(email)
+	if code == "" {
+		code = fmt.Sprintf("%06v", rand.New(rand.NewSource(time.Now().UnixNano())).Int31n(1000000))
+	}
 	body := `<h1>验证码` + code + `</h1><a>`
 
 	err := sendEmail(email, subject, body)
@@ -72,7 +76,7 @@ func SendCodeEmail(email string) *service.Response {
 	} else {
 		// 发送验证邮件成功
 		// 将邮箱进行缓存, 5分钟后过时
-		cache.Set(code, email, 300*time.Second)
+		cache.Set(email, code, 300*time.Second)
 		return &service.Response{Code: 20000, Msg: "发送验证码邮件成功！"}
 	}
 }

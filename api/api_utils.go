@@ -40,12 +40,12 @@ func HandleForgetPassword(c *gin.Context) {
 	_ = c.BindJSON(&form)
 
 	resp := &service.Response{}
-	cacheEmail := cache.Get(form.Code)
+	code := cache.Get(form.Email)
 
-	if cacheEmail == "" {
+	if code == "" {
 		resp.Code = 53004
 		resp.Msg = "该验证码不存在或已过期"
-	} else if cacheEmail != form.Email {
+	} else if code != form.Code {
 		resp.Code = 53003
 		resp.Msg = "该邮箱与获取验证码的邮箱不一致"
 	} else if form.Password != form.ConfirmPassword {

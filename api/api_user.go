@@ -7,7 +7,6 @@ import (
 	"vgo/cache"
 	"vgo/model"
 	"vgo/service"
-	"vgo/utils"
 
 	"github.com/gin-contrib/sessions"
 
@@ -17,26 +16,39 @@ import (
 // 用户注册与登录
 // 注册
 func HandleUserRegister(c *gin.Context) {
-	registerUser := service.UserRegisterService{}
+	register := service.UserRegisterService{}
 	// BindJSON 处理 post json 的请求
 	// 验证用户字段是否合法，合法则发送验证邮件
-	if err := c.ShouldBindJSON(&registerUser); err != nil {
+	if err := c.ShouldBindJSON(&register); err != nil {
 		resp := service.ValidateTrans(err)
 		c.JSON(200, resp)
 	} else {
 		// json 数据解析成功，需要做进一步验证
-		// 对邮箱和学工号进行重复性判断
+		// 先确定验证码对应的邮箱是否是提交注册内容的邮箱
+		// 对邮箱和用户名进行判断
 		// 插入数据库，并且对数据库插入能否成功作进一步验证
-		user := model.User{}
-		checkResp := user.CheckNameAndEmail(&registerUser)
-		if checkResp.Error != "" {
-			// 邮箱或学工号已被注册
-			c.JSON(200, checkResp)
+		if code := cache.Get(register.Email); code != register.Code {
+			resp := service.Response{}
+			resp.Code = 53003
+			resp.Msg = "验证码不正确或邮箱填写错误"
+			c.JSON(200, resp)
 		} else {
-
-			// 发送验证邮件，5分钟过时
-			mailResp := utils.SendRegisterEmail(&registerUser)
-			c.JSON(200, mailResp)
+			user := model.User{}
+			checkResp := user.CheckNameAndEmail(&register)
+			if checkResp.Error != "" {
+				// 邮箱或学工号已被注册
+				c.JSON(200, checkResp)
+			} else {
+				user := model.User{}
+				user.Create(&register)
+				cache.DelCache(register.Code)
+				c.JSON(200, service.Response{
+					Code:  20000,
+					Data:  nil,
+					Msg:   "注册成功",
+					Error: "",
+				})
+			}
 		}
 	}
 }
@@ -61,30 +73,6 @@ func HandleUserLogin(c *gin.Context) {
 			_ = s.Save()
 			c.JSON(200, resp)
 		}
-	}
-}
-
-// 用户验证完成，将信息插入数据库
-func HandleUserInsert(c *gin.Context) {
-	key := c.Param("key")
-	registerUser := cache.GetRegisterUserFromRedis(key)
-	if registerUser.UserName == "" {
-		c.JSON(200, service.Response{
-			Code:  54001,
-			Data:  nil,
-			Msg:   "请输入正确的访问路径",
-			Error: "",
-		})
-	} else {
-		user := model.User{}
-		user.Create(registerUser)
-		cache.DelCache(key)
-		c.JSON(200, service.Response{
-			Code:  20000,
-			Data:  nil,
-			Msg:   "注册成功",
-			Error: "",
-		})
 	}
 }
 

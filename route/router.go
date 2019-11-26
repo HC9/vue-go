@@ -13,7 +13,7 @@ func NewRouter() *gin.Engine {
 	engine := gin.Default()
 	// 添加中间件
 	engine.Use(middleware.Session())
-	engine.Use(middleware.Cors())
+	//engine.Use(middleware.Cors())
 	// 大括号用于仅用于分隔代码，不作具体逻辑处理
 	v1 := engine.Group("/api/v1")
 	{
@@ -29,14 +29,12 @@ func NewRouter() *gin.Engine {
 		v1.GET("/code", api.HandleGetEmaiCode)
 
 		// 注册处理
-		v1.POST("/user/register", api.HandleUserRegister)
-		// 用户邮件验证处理
-		v1.GET("/user/mail/:key", api.HandleUserInsert)
+		v1.POST("/register", api.HandleUserRegister)
 		// 忘记密码
-		v1.PUT("/forget-password", api.HandleForgetPassword)
+		v1.PUT("/password", api.HandleForgetPassword)
 
 		// 用户登录处理
-		v1.POST("/user/login", api.HandleUserLogin)
+		v1.POST("/user", api.HandleUserLogin)
 
 		v1.GET("/test", func(c *gin.Context) {
 			s := sessions.Default(c)

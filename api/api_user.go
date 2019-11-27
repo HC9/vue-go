@@ -116,15 +116,25 @@ func HandleGetUserInfo(c *gin.Context) {
 // 用户在登录状态下修改密码
 func HandleLoginStatusChangePassword(c *gin.Context) {
 	type Form struct {
-		Password string `json:"password"`
+		OldPassword string `json:"oldpassword"`
+		Password    string `json:"password"`
 	}
 	form := Form{}
 	_ = c.BindJSON(&form)
 
-	resp := &service.Response{}
 	user := getUser(c)
-	resp = user.AdminUpdatePassword(form.Password)
-	c.JSON(200, resp)
+	if err := user.CheckPassword(form.OldPassword); err == nil {
+		resp := user.AdminUpdatePassword(form.Password)
+		c.JSON(200, resp)
+	} else {
+		resp := &service.Response{
+			Code:  510002,
+			Data:  nil,
+			Msg:   "旧密码输入错误，请重新输入",
+			Error: "",
+		}
+		c.JSON(200, resp)
+	}
 }
 
 // 添加头像

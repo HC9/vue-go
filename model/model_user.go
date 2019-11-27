@@ -105,6 +105,7 @@ func (user *User) CheckPassword(password string) error {
 
 // 登录用户修改密码
 func (user *User) AdminUpdatePassword(password string) *service.Response {
+
 	user.setPassword(password)
 	DB.Model(&user).Update("password", user.Password)
 	return &service.Response{

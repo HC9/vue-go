@@ -80,7 +80,7 @@ func NewRouter() *gin.Engine {
 			auth.GET("admin/bbs", api.HandleAdminBBSList)
 			auth.PUT("admin/updateArticle", api.HandleUpdateArticle)
 			auth.DELETE("admin/deleteArticle", api.HandleDeleteArticle)
-			auth.PUT("admin/change-password", api.HandleLoginStatusChangePassword)
+			auth.PUT("/password/change", api.HandleLoginStatusChangePassword)
 		}
 	}
 

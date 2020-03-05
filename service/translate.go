@@ -1,4 +1,4 @@
-package conf
+package service
 
 import (
 	"io/ioutil"
@@ -11,7 +11,7 @@ import (
 )
 
 // 将  zh-cn.yaml 翻译成结构体，供 json 验证使用
-type TransCn struct {
+type TransZhCn struct {
 	// 选了  Tag 标准的内容
 	ActualTag struct {
 		Required string `yaml:"required"`
@@ -30,9 +30,9 @@ type TransCn struct {
 	} `yaml:"Field"`
 }
 
-//var Dictionary *TransCn
+//var dictionary *TransZhCn
 
-var Dictionary map[string]map[string]string
+var dictionary map[string]map[string]string
 
 // 提取配置文件进入系统变量
 // 初始化包的，由编译器自动运行
@@ -49,11 +49,11 @@ func init() {
 		log.Fatal(err)
 	}
 	dict := make(map[string]map[string]string)
-	//dict := TransCn{}
+	//dict := TransZhCn{}
 	if err := yaml.Unmarshal(data, dict); err != nil {
 		log.Fatal(err)
 	}
-	// 全局 Dictionary
-	Dictionary = dict
+	// 全局 dictionary
+	dictionary = dict
 
 }

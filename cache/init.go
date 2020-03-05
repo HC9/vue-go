@@ -45,7 +45,7 @@ func GetUserFromRedis(key string) *model.User {
 	user := &model.User{}
 	if cacheResult == "" {
 		userID, _ := strconv.Atoi(key)
-		user.Id = userID
+		user.ID = userID
 		model.DB.First(user)
 		SetStruct(user, key, 300*time.Second)
 	} else {
@@ -57,7 +57,7 @@ func GetUserFromRedis(key string) *model.User {
 // 更新缓存信息
 func UpdateUserCache(user *model.User) {
 	usJs, _ := json.Marshal(user)
-	ID := strconv.Itoa(user.Id)
+	ID := strconv.Itoa(user.ID)
 	SetStruct(usJs, ID, 3600*time.Second)
 }
 

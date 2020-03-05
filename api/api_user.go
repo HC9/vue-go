@@ -1,5 +1,6 @@
 package api
 
+import "C"
 import (
 	"io/ioutil"
 	"os"
@@ -33,8 +34,7 @@ func HandleUserRegister(c *gin.Context) {
 			resp.Msg = "验证码不正确或邮箱填写错误"
 			c.JSON(200, resp)
 		} else {
-			user := model.User{}
-			checkResp := user.CheckNameAndEmail(&register)
+			checkResp := model.CheckNameAndEmail(&register)
 			if checkResp.Error != "" {
 				// 邮箱或学工号已被注册
 				c.JSON(200, checkResp)
@@ -69,7 +69,7 @@ func HandleUserLogin(c *gin.Context) {
 		} else {
 			s := sessions.Default(c)
 			s.Clear()
-			s.Set("user_id", user.Id)
+			s.Set("user_id", user.ID)
 			_ = s.Save()
 			c.JSON(200, resp)
 		}
@@ -101,8 +101,7 @@ func HandleGetUserInfo(c *gin.Context) {
 	userResp.Username = user.Username
 	userResp.Status = user.Status
 	userResp.Email = user.Email
-	userResp.CreateTime = user.CreateTime.Format("2006年1月2号 15:04:05")
-	userResp.LoginTime = user.LoginTime.Format("2006年1月2号 15:04:05")
+	userResp.CreateTime = user.CreatedAt.Format("2006年1月2号 15:04:05")
 	resp := &service.Response{
 		Code:  20000,
 		Data:  userResp,
@@ -137,13 +136,23 @@ func HandleLoginStatusChangePassword(c *gin.Context) {
 	}
 }
 
+// 检查单一字段
+func HandleCheckFieldRepeat(c *gin.Context) {
+	check := model.CheckFieldRepeat{}
+	_ = c.BindJSON(&check)
+	if check.Name == "email" || check.Name == "username" {
+		resp := check.NameOrEmail()
+		c.JSON(200, resp)
+	}
+}
+
 // 添加头像
 func HandleUploadAvatar(c *gin.Context) {
 	basePath := os.Getenv("AVATAR_PATH")
 	file, _ := c.FormFile("file")
 
 	user := getUser(c)
-	avatarName := strconv.Itoa(user.Id) + ".jpg"
+	avatarName := strconv.Itoa(user.ID) + ".jpg"
 	filepath := basePath + avatarName
 	e := c.SaveUploadedFile(file, filepath)
 

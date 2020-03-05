@@ -79,10 +79,10 @@ func HandleUpdateArticle(c *gin.Context) {
 		Content string `json:"content"`
 	}
 
-	user := getUser(c)
-	updateInfo := Info{}
-	_ = c.BindJSON(&updateInfo)
-	resp := model.UpdateArticle(user, updateInfo.ID, updateInfo.Title, updateInfo.Content)
-	c.JSON(200, resp)
+	//user := getUser(c)
+	//updateInfo := Info{}
+	//_ = c.BindJSON(&updateInfo)
+	//resp := model.UpdateArticle(user, updateInfo.ID, updateInfo.Title, updateInfo.Content)
+	//c.JSON(200, resp)
 
 }

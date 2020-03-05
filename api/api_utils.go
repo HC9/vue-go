@@ -55,7 +55,7 @@ func HandleForgetPassword(c *gin.Context) {
 		user := model.User{}
 		model.DB.Where("email = ?", form.Email).First(&user)
 		fmt.Println(user)
-		if user.Id != 0 {
+		if user.ID != 0 {
 			resp = user.AdminUpdatePassword(form.Password)
 		} else {
 			resp.Code = 52002

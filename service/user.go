@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"reflect"
-	"vgo/conf"
 
 	"gopkg.in/go-playground/validator.v8"
 )
@@ -39,27 +38,12 @@ func ValidateTrans(err error) *Response {
 	if val, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range val {
 			// 翻译字段为中文
-			fmt.Println(e.ActualTag)
-			actualTag := transActualTag(e.ActualTag)
-			field := transField(e.Field)
+			actualTag := dictionary["ActualTag"][e.ActualTag]
+			field := dictionary["Field"][e.Field]
 			reflect.ValueOf(resp)
 			resp.Error = fmt.Sprintf("%s: %s", field, actualTag)
 			break
 		}
 	}
 	return resp
-}
-
-// 翻译验证条件字段
-func transActualTag(tag string) string {
-	//fmt.Printf("ActualTag 字段:%s\n", tag)
-	v := conf.Dictionary["ActualTag"][tag]
-	return v
-}
-
-// 翻译 Field 字段
-func transField(field string) string {
-	//fmt.Printf("Field 字段:%s\n", field)
-	v := conf.Dictionary["Field"][field]
-	return v
 }

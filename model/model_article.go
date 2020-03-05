@@ -8,15 +8,16 @@ import (
 )
 
 type Article struct {
-	ID         int       `gorm:"PRIMARY_KEY;AUTO_INCREMENT" json:"id"` // 主键
-	UID        int       `gorm:"type:int" json:"uid"`
-	Username   string    `gorm:"size:15;" json:"username"`
-	Subject    string    `gorm:"size:17;" json:"subject"`
-	Title      string    `gorm:"size:70;" json:"title"`
-	Content    string    `gorm:"type:longtext" json:"content"`
-	CreateTime time.Time `json:"create_time"`
-	UpdateTime time.Time `json:"update_time"`
-	Status     string    `gorm:"DEFAULT:'active';size:10" json:"status"`
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
+	UserID    int        `sql:"type:integer, constraint article_user foreign key(user_id) references users(id) on update cascade on delete restrict"`
+	Subject   string     `gorm:"size:15;"`
+	Title     string     `gorm:"size:70;"`
+	Content   string     `gorm:"type:longtext"`
+	Status    string     `gorm:"DEFAULT:'active';size:10"`
+	User      User
 }
 
 // 创建文章，文章的 UID 与 username 通过缓存中的用户信息来获取
@@ -24,9 +25,8 @@ type Article struct {
 // 前三个需要管理员权限和指定管理者才能添加，分别为0号为2号权限
 // 1 号权限仅能添加版本趣闻 interesting 的内容
 func (article *Article) Create(user *User) *service.Response {
-	article.UID = user.Id
-	article.Username = user.Username
-	article.CreateTime = time.Now()
+	article.UserID = user.ID
+	article.CreatedAt = time.Now()
 	article.Status = "active"
 
 	switch user.Role {
@@ -68,7 +68,7 @@ func (article *Article) Delete(user *User) *service.Response {
 	if user.Role == 0 {
 		e = DB.Model(&article).Where("id = ?", article.ID).Update("status", "inactive").Error
 	} else {
-		e = DB.Model(&article).Where("uid = ? and id = ?", user.Id, article.ID).Update("status", "inactive").Error
+		e = DB.Model(&article).Where("uid = ? and id = ?", user.ID, article.ID).Update("status", "inactive").Error
 	}
 
 	if e == nil {
@@ -175,11 +175,11 @@ func AdminArticleList(user *User, subject, start, limit string) *listArticleResp
 	case 1:
 		// 普通用户
 		if subject != "" {
-			DB.Model(&Article{}).Where("subject = ? and uid= ? and status='active'", subject, user.Id).Count(&resp.Total)
-			queryDB.Where("subject = ? and uid= ? and status='active'", subject, user.Id).Scan(&resp.Item)
+			DB.Model(&Article{}).Where("subject = ? and uid= ? and status='active'", subject, user.ID).Count(&resp.Total)
+			queryDB.Where("subject = ? and uid= ? and status='active'", subject, user.ID).Scan(&resp.Item)
 		} else {
-			DB.Model(&Article{}).Where("uid = ? and status='active'", user.Id).Count(&resp.Total)
-			queryDB.Where("uid = ? and status='active'", user.Id).Scan(&resp.Item)
+			DB.Model(&Article{}).Where("uid = ? and status='active'", user.ID).Count(&resp.Total)
+			queryDB.Where("uid = ? and status='active'", user.ID).Scan(&resp.Item)
 		}
 	}
 
@@ -189,29 +189,29 @@ func AdminArticleList(user *User, subject, start, limit string) *listArticleResp
 
 // 更新文章内容
 // 可以更新文章的标题与内容，添加更新时间
-func UpdateArticle(user *User, id int, title, content string) *service.Response {
-
-	article := Article{ID: id, UID: user.Id}
-	DB.First(&article)
-	// 更新内容
-	article.Content = content
-	article.Title = title
-	article.UpdateTime = time.Now()
-
-	e := DB.Model(&article).Updates(Article{Content: article.Content, Title: article.Title, UpdateTime: article.UpdateTime}).Error
-	if e == nil {
-		return &service.Response{
-			Code:  20000,
-			Data:  nil,
-			Msg:   "更新文章成功",
-			Error: "",
-		}
-	} else {
-		return &service.Response{
-			Code:  55004,
-			Data:  nil,
-			Msg:   "删除文章失败",
-			Error: "无权限删除或无指定文章",
-		}
-	}
-}
+//func UpdateArticle(user *User, id int, title, content string) *service.Response {
+//
+//	article := Article{gorm.Model{ID:id}}
+//	DB.First(&article)
+//	// 更新内容
+//	article.Content = content
+//	article.Title = title
+//	article.UpdatedAt = time.Now()
+//
+//	e := DB.Model(&article).Updates(Article{Content: article.Content, Title: article.Title, UpdateTime: article.UpdateTime}).Error
+//	if e == nil {
+//		return &service.Response{
+//			Code:  20000,
+//			Data:  nil,
+//			Msg:   "更新文章成功",
+//			Error: "",
+//		}
+//	} else {
+//		return &service.Response{
+//			Code:  55004,
+//			Data:  nil,
+//			Msg:   "删除文章失败",
+//			Error: "无权限删除或无指定文章",
+//		}
+//	}
+//}
